@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+
+export SWIFT_VERSION=3.0.1
+
+echo "Swift $SWIFT_VERSION Continuous Integration";
+
+# Determine OS
+UNAME=`uname`;
+if [[ $UNAME == "Darwin" ]];
+then
+    OS="macos";
+else
+    if [[ $UNAME == "Linux" ]];
+    then
+        UBUNTU_RELEASE=`lsb_release -a 2>/dev/null`;
+        if [[ $UBUNTU_RELEASE == *"15.10"* ]];
+        then
+            OS="ubuntu1510";
+        else
+            OS="ubuntu1404";
+        fi
+    else
+        echo "Unsupported Operating System: $UNAME";
+    fi
+fi
+echo "🖥 Operating System: $OS";
+
+if [[ $OS != "macos" ]];
+then
+    echo "🐦 Installing Swift";
+    eval "$(curl -sL https://gist.githubusercontent.com/kylef/5c0475ff02b7c7671d2a/raw/9f442512a46d7a2af7b850d65a7e9bd31edfb09b/swiftenv-install.sh)"
+fi
+
+echo "📅 Version: `swift --version`";
+
+echo "💼 Building Release";
+swift build -c release
+if [[ $? != 0 ]]; 
+then 
+    echo "❌  Build for release failed";
+    exit 1; 
+fi
+
+echo "🚀 Building";
+swift build
+if [[ $? != 0 ]]; 
+then 
+    echo "❌  Build failed";
+    exit 1; 
+fi
+
+echo "🔎 Testing";
+swift test
+
+if [[ $? != 0 ]];
+then 
+    echo "❌ Tests failed";
+    exit 1; 
+fi
+
+echo "✅ Done"
